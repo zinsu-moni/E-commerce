@@ -1,8 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, Form, HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.auth.auth import create_acccess_token
+from jose import JWTError
+
+from app.auth.auth import (
+    blacklist_token,
+    create_acccess_token,
+    get_token_ttl,
+    oauth2_scheme,
+)
 from app.db.database import get_db
 from app.models.models import User
 from app.schema.schema import CreateUser, UserLogin, VerifyOTP
@@ -139,15 +146,38 @@ def verify_otp(payload: VerifyOTP, db: Session = Depends(get_db)):
 
 
 @router.post("/login")
-async def login_user(user: UserLogin, db: Session = Depends(get_db)):
-    existing_user = db.query(User).filter(User.email == user.email).first()
+async def login_user(
+    db: Session = Depends(get_db),
+    email: str | None = Body(default=None),
+    password: str | None = Body(default=None),
+    username: str | None = Form(default=None),
+    form_password: str | None = Form(default=None, alias="password"),
+):
+    submitted_email = email or username
+    submitted_password = password or form_password
+
+    if not submitted_email or not submitted_password:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Provide credentials as JSON {email, password} or form-data {username, password}.",
+        )
+
+    try:
+        credentials = UserLogin(email=submitted_email, password=submitted_password)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid login payload",
+        )
+
+    existing_user = db.query(User).filter(User.email == credentials.email).first()
     if not existing_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
         )
 
-    if not verify_password(user.password, existing_user.password):
+    if not verify_password(credentials.password, existing_user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
@@ -166,8 +196,15 @@ async def login_user(user: UserLogin, db: Session = Depends(get_db)):
     }
 
 @router.post("/logout")
-def logout_user():
-    pass
-    return {"message": "Successfully logged out"}
+async def logout(token: str = Depends(oauth2_scheme)):
+    try:
+        ttl = get_token_ttl(token)
+        if ttl:
+            blacklist_token(token, ttl)
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
 
-
+    return {"message": "Logged out successfully"}
