@@ -1,6 +1,7 @@
 from app.db.cache import get_redis
 import random
 import json
+import secrets
 
 def generate_otp() -> str:
     return str(random.randint(100000, 999999))
@@ -35,3 +36,16 @@ def get_pending_user(email: str) -> dict | None:
 
 def delete_pending_user(email: str):
     get_redis().delete(f"pending_user:{email}")
+
+
+def generate_reset_token() -> str:
+    return secrets.token_urlsafe(32)
+
+def store_reset_token(email: str, token: str, ttl: int = 900): 
+    get_redis().setex(f"password_reset:{token}", ttl, email)
+
+def get_reset_token(token: str) -> str | None:
+    return get_redis().get(f"password_reset:{token}")
+
+def delete_reset_token(token: str):
+    get_redis().delete(f"password_reset:{token}")

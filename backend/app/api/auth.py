@@ -1,31 +1,55 @@
+import os
 from fastapi import APIRouter, Body, Depends, Form, HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-
 from jose import JWTError
-
-from app.auth.auth import (
+from app.services.auth import (
     blacklist_token,
     create_acccess_token,
     get_token_ttl,
     oauth2_scheme,
+    verify_access_token,
 )
+from app.models.models import User
 from app.db.database import get_db
 from app.models.models import User
-from app.schema.schema import CreateUser, UserLogin, VerifyOTP
-from app.utils.email import send_otp_email
+from app.schema.schema import CreateUser, ForgotPassword, ResetPassword, UserLogin, VerifyOTP
+from app.utils.email import send_otp_email, send_password_reset_email, welcome_message, password_changed_successfully
 from app.utils.otp import (
     delete_otp,
     delete_pending_user,
+    delete_reset_token,
     generate_otp,
+    generate_reset_token,
     get_otp,
     get_pending_user,
+    get_reset_token,
     store_otp,
     store_pending_user,
+    store_reset_token,
 )
 from app.utils.utils import hash_password, verify_password
 
 router = APIRouter()
+
+
+
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    user_id = verify_access_token(token)
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token"
+        )
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    return user
+
 
 
 @router.post("/register")
@@ -57,6 +81,8 @@ async def register_user(user: CreateUser, db: Session = Depends(get_db)):
 
     hashed_password = hash_password(user.password)
     store_pending_user(user.email, user.full_name, hashed_password)
+    welcome_message(user.email)
+
 
     return {
         "message": "OTP sent to email. Verify OTP to complete registration.",
@@ -208,3 +234,70 @@ async def logout(token: str = Depends(oauth2_scheme)):
         )
 
     return {"message": "Logged out successfully"}
+
+
+
+@router.post("/forgot-password")
+async def forgot_password(payload: ForgotPassword, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == payload.email).first()
+
+    if not user:
+        return {"message": "If this email is registered, a reset link has been sent."}
+
+    token = generate_reset_token()
+    store_reset_token(payload.email, token)
+    reset_link =f"{os.getenv('FRONTEND_URL')}/reset-password?token={token}"
+
+    try:
+        send_password_reset_email(payload.email, reset_link)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send reset email"
+        )
+
+    return {"message": "If this email is registered, a reset link has been sent."}
+
+
+@router.post("/reset-password")
+async def reset_password(payload: ResetPassword, db: Session = Depends(get_db)):
+    email = get_reset_token(payload.token)
+
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Reset link is invalid or has expired"
+        )
+
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    user.password = hash_password(payload.new_password)
+    db.commit()
+
+    delete_reset_token(payload.token)
+
+    return {"message": "Password reset successful. You can now log in."}
+
+@router.post("/change-password")
+async def change_password(
+    current_password: str = Body(...),
+    new_password: str = Body(...),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not verify_password(current_password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect"
+        )
+
+    user.password = hash_password(new_password)
+    db.commit()
+    password_changed_successfully(user.email)
+    
+    return {"message": "Password changed successfully."}
