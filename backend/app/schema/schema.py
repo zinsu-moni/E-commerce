@@ -10,4 +10,7 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str = Field(min_length=6, max_length=25)
 
+class VerifyOTP(BaseModel):
+    email: EmailStr
+    otp: str
 

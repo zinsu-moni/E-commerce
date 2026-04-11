@@ -1,33 +1,117 @@
-from fastapi import APIRouter, HTTPException, status, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
 from app.auth.auth import create_acccess_token
-from app.utils.utils import hash_password
-from app.utils.utils import verify_password
 from app.db.database import get_db
-from app.schema.schema import CreateUser, UserLogin
 from app.models.models import User
+from app.schema.schema import CreateUser, UserLogin, VerifyOTP
+from app.utils.email import send_otp_email
+from app.utils.otp import (
+    delete_otp,
+    delete_pending_user,
+    generate_otp,
+    get_otp,
+    get_pending_user,
+    store_otp,
+    store_pending_user,
+)
+from app.utils.utils import hash_password, verify_password
 
 router = APIRouter()
 
 
-
-@router.post("/auth/register")
-async def RegisterUser(user: CreateUser, db: Session = Depends(get_db)):
+@router.post("/register")
+async def register_user(user: CreateUser, db: Session = Depends(get_db)):
     existing_user = db.query(User).filter(User.email == user.email).first()
     if existing_user:
-        print(f"Registration rejected: email already registered ({user.email})")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            detail="Email already registered",
+        )
+
+    otp = generate_otp()
+    try:
+        store_otp(user.email, otp)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="OTP service is unavailable",
+        )
+
+    try:
+        send_otp_email(user.email, otp)
+    except Exception:
+        delete_otp(user.email)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send OTP email",
         )
 
     hashed_password = hash_password(user.password)
+    store_pending_user(user.email, user.full_name, hashed_password)
+
+    return {
+        "message": "OTP sent to email. Verify OTP to complete registration.",
+        "email": user.email,
+    }
+
+
+@router.post("/send-otp")
+def send_otp(email: str):
+    otp = generate_otp()
+    try:
+        store_otp(email, otp)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="OTP service is unavailable",
+        )
+    try:
+        send_otp_email(email, otp)
+    except Exception:
+        delete_otp(email)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send OTP email",
+        )
+    return {"message": "OTP sent", "email": email}
+
+
+@router.post("/verify-otp")
+def verify_otp(payload: VerifyOTP, db: Session = Depends(get_db)):
+    stored_otp = get_otp(payload.email)
+    pending_user = get_pending_user(payload.email)
+
+    if not stored_otp:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="OTP expired or not found. Please request a new OTP.",
+        )
+
+    if stored_otp != payload.otp:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid OTP",
+        )
+
+    if not pending_user:
+        existing_user = db.query(User).filter(User.email == payload.email).first()
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="User is already registered. Please login.",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No pending registration found. Start with /api/v1/auth/register.",
+        )
+
     new_user = User(
-        username=user.email,
-        full_name=user.full_name,
-        email=user.email,
-        password=hashed_password
+        username=payload.email,
+        full_name=pending_user["full_name"],
+        email=payload.email,
+        password=pending_user["hashed_password"],
     )
 
     db.add(new_user)
@@ -38,11 +122,14 @@ async def RegisterUser(user: CreateUser, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User registration failed due to a duplicate value"
+            detail="User registration failed due to a duplicate value",
         )
 
+    delete_otp(payload.email)
+    delete_pending_user(payload.email)
+
     return {
-        "message": "User registered successfully",
+        "message": "OTP verified and user registered successfully",
         "user": {
             "id": new_user.id,
             "full_name": new_user.full_name,
@@ -50,7 +137,8 @@ async def RegisterUser(user: CreateUser, db: Session = Depends(get_db)):
         },
     }
 
-@router.post("/auth/login")
+
+@router.post("/login")
 async def login_user(user: UserLogin, db: Session = Depends(get_db)):
     existing_user = db.query(User).filter(User.email == user.email).first()
     if not existing_user:
@@ -76,3 +164,10 @@ async def login_user(user: UserLogin, db: Session = Depends(get_db)):
             "email": existing_user.email,
         },
     }
+
+@router.post("/logout")
+def logout_user():
+    pass
+    return {"message": "Successfully logged out"}
+
+
