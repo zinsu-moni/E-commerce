@@ -64,3 +64,22 @@ class ProductUpdate(BaseModel):
     image_url: Optional[str] = None
     image_public_id: Optional[str] = None
     images: Optional[List[str]] = []
+
+
+class CartItem(BaseModel):
+    product_id: str
+    quantity: int
+
+
+class CartItemResponse(BaseModel):
+    id: str
+    user_id: int
+    product_id: str
+    quantity: int
+
+    class Config:
+        from_attributes = True
+
+class CartItemUpdate(BaseModel):
+    quautity: str
+

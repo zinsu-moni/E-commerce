@@ -1,6 +1,8 @@
-from sqlalchemy import Boolean, Column, Float, Integer, String, Text
+from sqlalchemy import Boolean, Column, Float, Integer, String, Text, DateTime, JSON, ForeignKey
 from sqlalchemy import JSON
 from app.db.database import Base
+from datetime import datetime
+
 
 class User(Base):
     __tablename__ = "user"
@@ -28,3 +30,11 @@ class Product(Base):
     images = Column(JSON, nullable=True, default=[])
 
     
+class Cart(Base):
+    __tablename__ = "Cart"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    product_id = Column(Integer, ForeignKey("product.id"), nullable=False )
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
