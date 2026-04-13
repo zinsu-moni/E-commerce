@@ -19,10 +19,11 @@ def delete_otp(email: str):
     get_redis().delete(f"otp:{email}")
 
 
-def store_pending_user(email: str, full_name: str, hashed_password: str, ttl: int = 300):
+def store_pending_user(email: str, full_name: str, hashed_password: str, role: str = "User", ttl: int = 300):
     payload = json.dumps({
         "full_name": full_name,
         "hashed_password": hashed_password,
+        "role": role,
     })
     get_redis().setex(f"pending_user:{email}", ttl, payload)
 
