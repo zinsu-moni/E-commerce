@@ -94,6 +94,19 @@ def update_product(
 
 
 @router.delete("/{product_id}")
-def delete_product(product_id: int, db:Session = Depends(get_db)):
-    pass
+def delete_product(product_id: int, db:Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    product = db.query(Product).filter(Product.id == product_id).first()
 
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Access Denied"
+        )
+    
+    if not product:
+        raise HTTPException(
+            status_code=404,
+            detail="Not a product"
+        )
+    db.delete(product)
+    db.commit()
