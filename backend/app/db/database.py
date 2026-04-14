@@ -48,6 +48,31 @@ def init_db():
         with engine.begin() as connection:
             if recreate_product_table:
                 connection.execute(text("DROP TABLE product"))
+
+    # Migrate Cart table
+    table_names = inspector.get_table_names()
+    cart_table_name = "Cart" if "Cart" in table_names else "cart" if "cart" in table_names else None
+    recreate_cart_table = False
+    if cart_table_name:
+        existing_columns = {column["name"] for column in inspector.get_columns(cart_table_name)}
+        required_columns = {"id", "product_id", "user_id", "created_at", "updated_at"}
+
+        if not required_columns.issubset(existing_columns):
+            recreate_cart_table = True
+
+        with engine.begin() as connection:
+            if recreate_cart_table:
+                # Old local schemas may have incompatible cart columns; rebuild table.
+                connection.execute(text('DROP TABLE IF EXISTS "Cart"'))
+                connection.execute(text('DROP TABLE IF EXISTS "cart"'))
+            elif "quantity" not in existing_columns:
+                connection.execute(text(f'ALTER TABLE "{cart_table_name}" ADD COLUMN quantity INTEGER DEFAULT 1'))
+
+                # Backfill from common misspelled legacy column if present.
+                if "quautity" in existing_columns:
+                    connection.execute(
+                        text(f'UPDATE "{cart_table_name}" SET quantity = quautity WHERE quautity IS NOT NULL')
+                    )
     
     # Recreate all tables to ensure proper schema
     Base.metadata.create_all(bind=engine)

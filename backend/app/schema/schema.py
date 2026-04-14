@@ -67,19 +67,19 @@ class ProductUpdate(BaseModel):
 
 
 class CartItem(BaseModel):
-    product_id: str
+    product_id: int
     quantity: int
 
 
 class CartItemResponse(BaseModel):
-    id: str
+    id: int
     user_id: int
-    product_id: str
+    product_id: int
     quantity: int
 
     class Config:
         from_attributes = True
 
 class CartItemUpdate(BaseModel):
-    quautity: str
+    quantity: int
 

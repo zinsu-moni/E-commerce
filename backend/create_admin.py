@@ -14,7 +14,7 @@ Base.metadata.create_all(bind=engine)
 db = SessionLocal()
 
 
-admin_email = "zinsucodes@gmail.com"
+admin_email = "zinsusezonsu@gmail.com"
 admin_password = "12345678"
 
 existing_admin = db.query(User).filter(User.email == admin_email).first()
@@ -24,12 +24,12 @@ if existing_admin:
     print(f"Deleted existing admin")
 
 admin = User(
-    username="admin",
-    full_name="Super Admin",
+    username="zinsusezonsu@gmail.com",
+    full_name="zinsu dev",
     email=admin_email,
     password=hash_password(admin_password),
-    role="admin",
-    is_admin=1
+    role="user",
+    is_admin=0
 )
 
 db.add(admin)

@@ -85,7 +85,7 @@ async def register_user(user: CreateUser, db: Session = Depends(get_db)):
 
     hashed_password = hash_password(user.password)
     store_pending_user(user.email, user.full_name, hashed_password, user.role)
-    welcome_message(user.email)
+    
 
 
     return {
@@ -165,6 +165,7 @@ def verify_otp(payload: VerifyOTP, db: Session = Depends(get_db)):
 
     delete_otp(payload.email)
     delete_pending_user(payload.email)
+    welcome_message(new_user.email)
 
     return {
         "message": "OTP verified and user registered successfully",
