@@ -20,8 +20,10 @@ def create_acccess_token(data: dict):
     return jwt.encode(encode, secret_key, algorithm=algorithm)
 
 
-def verify_access_token(token: str):
+def verify_access_token(token: str | None):
     if not secret_key or not algorithm:
+        return None
+    if not token:
         return None
     if is_token_blacklisted(token):
         return None
@@ -31,11 +33,13 @@ def verify_access_token(token: str):
         if user_id is None:
             return None
         return user_id
-    except JWTError:
+    except (JWTError, AttributeError, TypeError):
         return None
 
 
-def is_token_blacklisted(token: str) -> bool:
+def is_token_blacklisted(token: str | None) -> bool:
+    if not token:
+        return False
     try:
         return get_redis().exists(f"blacklist:{token}") == 1
     except Exception:
@@ -48,8 +52,14 @@ def blacklist_token(token: str, ttl: int):
     get_redis().setex(f"blacklist:{token}", ttl, "1")
 
 
-def get_token_ttl(token: str) -> int | None:
-    payload = jwt.decode(token, secret_key, algorithms=[algorithm])
+def get_token_ttl(token: str | None) -> int | None:
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, secret_key, algorithms=[algorithm])
+    except (JWTError, AttributeError, TypeError):
+        return None
+
     exp = payload.get("exp")
     if exp is None:
         return None
