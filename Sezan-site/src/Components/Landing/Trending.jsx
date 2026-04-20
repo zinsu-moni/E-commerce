@@ -56,14 +56,34 @@ function Trending() {
         ))}
       </section>
       {/* ....CARD...... */}
-      <section className="bg-gradient-to-tr from-[#3132ED] to-[#5054FF]  h-[512px]  rounded-[24px] ml-[32px]  mr-[32px]  justify-between mt-[96px] mb-[96px] flex flex-row">
+      <section className="bg-gradient-to-tr from-[#3132ED] to-[#5054FF]  h-[512px]  rounded-[24px] mx-[32px] mt-[96px] mb-[96px] shadow-[0px_25px_50px_-12px_rgba(0,0,0,0.25)] flex relative ">
         {/* LEFT  HAND SIDE */}
-        <div className=" flex flex-col  gap-[16px] p-[80px] pr-[px]">
-             <p className="w-[426px] h-[120px] font-black leading-[60px] text-[#FFFFFF] text-[60px] ">20% Off Your First Order </p> 
-             <p className="w-[426px] h-[100px] text-[#FFFFFF] font-normal text-[20px] leading-[28px]">Start your architectural journey today with an exclusive discount across our entire curated catalog.</p>
+        <div className=" flex flex-col  gap-[24px] p-[80px] pr-[0px] ">
+          <p className="w-[426px] h-[120px] font-black leading-[65px] text-[#FFFFFF] text-[60px] ">
+            20% Off Your First Order{" "}
+          </p>
+          <p className=" h-[100px] text-[#FFFFFF] font-normal text-[20px] leading-[28px]">
+            Start your architectural journey today with an <br />
+            exclusive discount across our entire curated <br />
+            catalog.
+          </p>
+          <div className="w-[300px] h-[66px] rounded-[12px] flex gap-[16px] p-[8px] bg-[#FFFFFF1A]  border border-[#FFFFFF33] items-center ">
+            <span
+              className="font-black text-[#FFFFFF] text-[24px] leading-[32px] px-[16px] font- mono" > ELITE20</span>{" "}
+            
+              <button className="bg-[#FFFFFF] rounded-[8px] w-[134.13999938964844px] h-[48px] flex items-center justify-center cursor-pointer px-[24px] py-[12px] hover:bg-[#FFFFFFCC] transition duration-300"><span className="text-[#3132ED] font-bold leading-[24px]text-[16px]"> Copy Code</span></button> 
+          </div>
         </div>
         {/* RIGHT HAND SIDE */}
-        <div className=""> <img src={container} alt="Container"  className=" pt-[40px] object-cover "/></div>
+        <div className="">
+          {" "}
+          <img
+            src={container}
+            alt="Container"
+            className=" pt-[40px] object-cover  w-full min-w-[750px] pr -[80px]  ml-[-80px] mr-[-80px]"
+          />
+        </div>
+        <div className="absolute top-16 right-20 w-36 h-34 bg-[#50FCB1] rounded-full blur-[80px]"></div>
       </section>
     </div>
   );
