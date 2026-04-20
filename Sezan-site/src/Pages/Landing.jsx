@@ -10,8 +10,10 @@ function Landing (){
         <Hero/>
         <Curated/>
         <Trending/>
-        <Quote/>
+        <Quote />
+         <Fluid />
         </>
+
     )
 }
 export default Landing;
