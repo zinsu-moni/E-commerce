@@ -4,7 +4,7 @@ import {FaShoppingCart, FaUserCircle,FaSearch } from "react-icons/fa"
 
 function Navbar(){
     return(
-        <nav className="flex flex-row items-center justify-between p-3 h-[80px] z-auto] border-b border-gray-200  bg-[#FFFFFF] shadow-2xl" >
+        <nav className="flex flex-row items-center justify-between p-3 h-[80px] z-auto] border-b border-gray-200  bg-[#FFFFFF] shadow-xl" >
             <div className="pl-3">
                 <Link><img src={Container} alt="" /></Link>
             </div>

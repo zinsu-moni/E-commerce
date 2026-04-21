@@ -38,7 +38,7 @@ function Trending() {
         {props.map((item, index) => (
           <div
             key={index}
-            className="cursor-pointer transition-all duration-300     hover:-translate-y-[5px] hover:shadow-lg"
+            className="cursor-pointer transition-all duration-300     hover:-translate-y-[5px]"
           >
             <img
               src={item.img}
