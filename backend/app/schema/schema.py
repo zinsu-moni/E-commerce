@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from typing import Optional, List
+from datetime import datetime
 
 class CreateUser(BaseModel):
     full_name: str
@@ -66,20 +67,24 @@ class ProductUpdate(BaseModel):
     images: Optional[List[str]] = []
 
 
-class CartItem(BaseModel):
-    product_id: int
+
+class CartItemUpdate(BaseModel):
     quantity: int
 
+class CartItem(BaseModel):
+    product_id: int
+    quantity: int = Field(..., ge=1)
+
+class CartItemUpdate(BaseModel):
+    quantity: int = Field(..., ge=1, description="Must be at least 1")
 
 class CartItemResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)  
+
     id: int
     user_id: int
     product_id: int
     quantity: int
-
-    class Config:
-        from_attributes = True
-
-class CartItemUpdate(BaseModel):
-    quantity: int
+    created_at: datetime
+    updated_at: datetime
 

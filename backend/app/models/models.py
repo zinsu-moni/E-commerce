@@ -43,5 +43,8 @@ class Cart(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user = relationship("User", back_populates="cart")
     product = relationship("Product", back_populates="cart")
+from pydantic import BaseModel, Field
 
+class CartItemUpdate(BaseModel):
+    quantity: int = Field(..., ge=1, description="Must be at least 1")
     
