@@ -18,7 +18,7 @@ async def add_to_cart(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Check product exists
+    
     product = db.query(Product).filter(Product.id == payload.product_id).first()
     if not product:
         raise HTTPException(
@@ -26,14 +26,14 @@ async def add_to_cart(
             detail="Product not found"
         )
  
-    # Check stock
+    
     if product.stock < payload.quantity:
         raise HTTPException(
             status_code=400,
             detail=f"Only {product.stock} units available"
         )
  
-    # If product already in cart, increment quantity
+    
     existing_item = db.query(Cart).filter(
         Cart.user_id == current_user.id,
         Cart.product_id == payload.product_id,
@@ -41,7 +41,6 @@ async def add_to_cart(
  
     if existing_item:
         new_quantity = existing_item.quantity + payload.quantity
-        # Re-check stock against combined quantity
         if product.stock < new_quantity:
             raise HTTPException(
                 status_code=400,
@@ -52,7 +51,7 @@ async def add_to_cart(
         db.refresh(existing_item)
         return CartItemResponse.model_validate(existing_item)
  
-    # Create new cart item
+
     cart_item = Cart(
         user_id=current_user.id,
         product_id=payload.product_id,
