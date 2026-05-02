@@ -1,6 +1,6 @@
 
-Copy
 
+from typing import List
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -116,9 +116,9 @@ async def update_cart(
     cart_item_db.quantity = cart_item.quantity
     db.commit()
 
-    # ✅ Re-query instead of refresh — bypasses the session expiry issue
-        db.refresh(cart_item_db)
-        return CartItemResponse.from_orm(cart_item_db)
+    
+    db.refresh(cart_item_db)
+    return CartItemResponse.from_orm(cart_item_db)
  
 @router.delete("/delete-cart/{cart_item_id}")
 async def delete_cart(
