@@ -45,6 +45,11 @@ class Cart(Base):
     product = relationship("Product", back_populates="cart")
 from pydantic import BaseModel, Field
 
-class CartItemUpdate(BaseModel):
-    quantity: int = Field(..., ge=1, description="Must be at least 1")
+class OrderStatus(Base):
+    __tablename__  = "Order"
+
+    pending = Column(Integer, primary_key=True, nullable=False)
+    shipped = Column(Integer, primary_key=True, nullable=False)
+    delivered = Column(Integer, primary_key=True, nullable=False)
+    cancelled = Column(Integer, primary_key=True, nullable=False)
     

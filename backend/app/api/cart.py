@@ -1,3 +1,6 @@
+
+Copy
+
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -15,7 +18,7 @@ async def add_to_cart(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    
+    # Check product exists
     product = db.query(Product).filter(Product.id == payload.product_id).first()
     if not product:
         raise HTTPException(
@@ -23,14 +26,14 @@ async def add_to_cart(
             detail="Product not found"
         )
  
-
+    # Check stock
     if product.stock < payload.quantity:
         raise HTTPException(
             status_code=400,
             detail=f"Only {product.stock} units available"
         )
  
-    
+    # If product already in cart, increment quantity
     existing_item = db.query(Cart).filter(
         Cart.user_id == current_user.id,
         Cart.product_id == payload.product_id,
@@ -38,6 +41,7 @@ async def add_to_cart(
  
     if existing_item:
         new_quantity = existing_item.quantity + payload.quantity
+        # Re-check stock against combined quantity
         if product.stock < new_quantity:
             raise HTTPException(
                 status_code=400,
@@ -48,7 +52,7 @@ async def add_to_cart(
         db.refresh(existing_item)
         return CartItemResponse.model_validate(existing_item)
  
-    
+    # Create new cart item
     cart_item = Cart(
         user_id=current_user.id,
         product_id=payload.product_id,
@@ -65,6 +69,7 @@ async def get_my_cart(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """Get the current user's cart items."""
     cart = db.query(Cart).filter(Cart.user_id == current_user.id).all()
     return [CartItemResponse.model_validate(item) for item in cart]
  
@@ -74,6 +79,7 @@ async def get_all_carts(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """Admin only — get all cart items across all users."""
     if not current_user.is_admin:
         raise HTTPException(
             status_code=403,
@@ -110,8 +116,9 @@ async def update_cart(
     cart_item_db.quantity = cart_item.quantity
     db.commit()
 
-    db.refresh(cart_item_db)
-    return CartItemResponse.from_orm(cart_item_db)
+    # ✅ Re-query instead of refresh — bypasses the session expiry issue
+        db.refresh(cart_item_db)
+        return CartItemResponse.from_orm(cart_item_db)
  
 @router.delete("/delete-cart/{cart_item_id}")
 async def delete_cart(
@@ -119,6 +126,7 @@ async def delete_cart(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """Remove an item from the cart."""
     cart_item_db = db.query(Cart).filter(Cart.id == cart_item_id).first()
     if not cart_item_db:
         raise HTTPException(
@@ -142,6 +150,7 @@ async def clear_cart(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """Remove all items from the current user's cart."""
     db.query(Cart).filter(Cart.user_id == current_user.id).delete()
     db.commit()
     return {"detail": "Cart cleared successfully"}
