@@ -12,51 +12,58 @@ function Curated() {
     { id: 3, src: Lifestyle, alt: "Lifestyle" },
   ];
   return (
-    <div className="bg-[#F2F3FF]  size-auto ">
-      <div className="flex flex-row items-center justify-between pt-[96px] pr-[32px] pb-[96px] pl-[32px]">
-        <h1 className=" font-black text-[36px] text-[#312E81] leading-[40px] tracking-[0.9px]">
+    <div className="bg-[#F2F3FF] flex flex-col px-[32px] py-[96px] gap-[32px]">
+      <section className="flex flex-row justify-between">
+        <p className="w-[341.9700012207031px] leading-[40px] text-[#312E81] text-[36px] tracking-[-0.9px] font-black">
           Curated Collections
-        </h1>
-        <Link
-          to="/login"
-          className=" font-bold text-[16px] text-[#3132ED] leading-[24px] flex flex-row gap-[8px] h-[24px] "
-        >
-          View All Categories{" "}
-          <img
-            src={arrow2}
-            alt="Arrow"
-            className="object-cover w-[15px] h-[15px] cursor-pointer"
-          />
-        </Link>
-      </div>
-      <div className="grid grid-cols-[1fr_1fr] gap-[24px] pr-[32px] pl-[32px] pb-[96px]">
-        <section>
-          <img
-            src={images[0].src}
-            alt={images[0].alt}
-            className="object-cover cursor-pointer transition-transform duration-500 hover:-translate-y-[10px]"
-          />
-        </section>
+        </p>
+        <div className="flex flex-row gap-[8px] items-center cursor-pointer">
+          <Link to="/categories">
+            <p className="h-[24px] font-bold text-[#3132ED] leading-[24px] ">
+              View All Categories
+            </p>
+          </Link>
+          <img src={arrow2} alt="Arrow" className="w-[15px] h-[15px]" />
+        </div>
+      </section>
+      <section className="grid grid-cols-[1fr_1fr] gap-[24px] ">
+        <div>
+          <Link to="/">
+            <img
+              src={images[0].src}
+              alt={images[0].alt}
+              className="object-cover w-full h-full transition-transform duration-500 hover:-translate-y-[10px]"
+            />
+          </Link>
+        </div>
         <section className="grid grid-rows-[1fr_1fr] gap-[24px] ">
-          <img
-            src={images[1].src}
-            alt={images[1].alt}
-            className="object-cover cursor-pointer transition-transform duration-500 hover:-translate-y-[10px]"
-          />
+          <div>
+            <Link to="/">
+              <img
+                src={images[1].src}
+                alt={images[1].alt}
+                className="object-cover w-full h-full transition-transform duration-500 hover:-translate-y-[10px]"
+              />
+            </Link>
+          </div>
           <div className="grid grid-cols-[1fr_1fr] gap-[24px]">
-            <img
-              src={images[2].src}
-              alt={images[2].alt}
-              className="object-cover cursor-pointer transition-transform duration-500 hover:-translate-y-[10px]"
-            />
-            <img
-              src={images[3].src}
-              alt={images[3].alt}
-              className="object-cover cursor-pointer transition-transform duration-500 hover:-translate-y-[10px]"
-            />
+            <Link to="/">
+              <img
+                src={images[2].src}
+                alt={images[2].alt}
+                className="object-cover w-full h-full transition-transform duration-500 hover:-translate-y-[10px] "
+              />
+            </Link>
+            <Link to="/">
+              <img
+                src={images[3].src}
+                alt={images[3].alt}
+                className="object-cover w-full h-full transition-transform duration-500 hover:-translate-y-[10px] "
+              />
+            </Link>
           </div>
         </section>
-      </div>
+      </section>
     </div>
   );
 }
