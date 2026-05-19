@@ -11,7 +11,7 @@ DATABASE_URL = "sqlite:///./ecomm.db"
 
 engine = create_engine(DATABASE_URL)
 user_engine = engine 
-SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False, expire_on_commit=False)
 Base = declarative_base()
 
 

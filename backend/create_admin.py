@@ -17,19 +17,20 @@ db = SessionLocal()
 admin_email = "zinsusezonsu@gmail.com"
 admin_password = "12345678"
 
+
 existing_admin = db.query(User).filter(User.email == admin_email).first()
 if existing_admin:
-    db.delete(existing_admin)
-    db.commit()
-    print(f"Deleted existing admin")
+    print(f"Admin with email {admin_email} already exists. Aborting.")
+    db.close()
+    sys.exit(1)
 
 admin = User(
     username="zinsusezonsu@gmail.com",
     full_name="zinsu dev",
     email=admin_email,
     password=hash_password(admin_password),
-    role="user",
-    is_admin=0
+    role="admin",
+    is_admin=1
 )
 
 db.add(admin)

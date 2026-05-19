@@ -43,5 +43,13 @@ class Cart(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user = relationship("User", back_populates="cart")
     product = relationship("Product", back_populates="cart")
+from pydantic import BaseModel, Field
 
+class OrderStatus(Base):
+    __tablename__  = "Order"
+
+    pending = Column(Integer, primary_key=True, nullable=False)
+    shipped = Column(Integer, primary_key=True, nullable=False)
+    delivered = Column(Integer, primary_key=True, nullable=False)
+    cancelled = Column(Integer, primary_key=True, nullable=False)
     
