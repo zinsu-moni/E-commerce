@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.api.auth import get_current_user
 from app.models.models import Cart, Product, User
+from app.schema.schema import CheckoutRequest
 from app.services.payment import initialize_payment, verify_payment, get_bridge, FRONTEND_URL  # type: ignore
 import time
 
@@ -11,6 +12,7 @@ router = APIRouter()
 
 @router.post("/checkout")
 async def checkout(
+    payload: CheckoutRequest | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -29,13 +31,25 @@ async def checkout(
     reference = f"order_{current_user.id}_{int(time.time())}"
     callback_url = f"{FRONTEND_URL}/payments/callback"
 
+    checkout_metadata = {
+        "user_id": current_user.id,
+        "full_name": payload.address.full_name if payload else current_user.full_name,
+        "phone": payload.address.phone if payload else None,
+        "address": payload.address.model_dump() if payload else None,
+        "save_address": payload.save_address if payload else False,
+        "delivery_notes": payload.delivery_notes if payload else None,
+    }
+
+    # Remove empty values before sending to the gateway.
+    checkout_metadata = {key: value for key, value in checkout_metadata.items() if value is not None}
+
     try:
         payment = await initialize_payment(
             amount=total,
             email=current_user.email,
             reference=reference,
             callback_url=callback_url,
-            metadata={"user_id": current_user.id},
+            metadata=checkout_metadata,
         )
     except Exception as exc:
         raise HTTPException(status_code=502, detail=str(exc))
