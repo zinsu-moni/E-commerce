@@ -1,5 +1,6 @@
 from sqlalchemy import Boolean, Column, Float, Integer, String, Text, DateTime, JSON, ForeignKey
 from sqlalchemy.orm import relationship
+from pydantic import BaseModel, Field
 from app.db.database import Base
 from datetime import datetime
 
@@ -43,7 +44,7 @@ class Cart(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user = relationship("User", back_populates="cart")
     product = relationship("Product", back_populates="cart")
-from pydantic import BaseModel, Field
+
 
 class OrderStatus(Base):
     __tablename__  = "Order"

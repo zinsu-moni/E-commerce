@@ -14,7 +14,7 @@ Base.metadata.create_all(bind=engine)
 db = SessionLocal()
 
 
-admin_email = "zinsusezonsu@gmail.com"
+admin_email = "monimeadi01@gmail.com"
 admin_password = "12345678"
 
 
@@ -25,8 +25,8 @@ if existing_admin:
     sys.exit(1)
 
 admin = User(
-    username="zinsusezonsu@gmail.com",
-    full_name="zinsu dev",
+    username="monimeadi01@gmail.com",
+    full_name="moni meadi",
     email=admin_email,
     password=hash_password(admin_password),
     role="admin",
