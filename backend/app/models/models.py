@@ -1,5 +1,6 @@
 from sqlalchemy import Boolean, Column, Float, Integer, String, Text, DateTime, JSON, ForeignKey
 from sqlalchemy.orm import relationship
+from pydantic import BaseModel, Field
 from app.db.database import Base
 from datetime import datetime
 
@@ -43,7 +44,7 @@ class Cart(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user = relationship("User", back_populates="cart")
     product = relationship("Product", back_populates="cart")
-from pydantic import BaseModel, Field
+
 
 class OrderStatus(Base):
     __tablename__  = "Order"
@@ -53,3 +54,34 @@ class OrderStatus(Base):
     delivered = Column(Integer, primary_key=True, nullable=False)
     cancelled = Column(Integer, primary_key=True, nullable=False)
     
+
+
+class Order(Base):
+    __tablename__ = "orders"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    reference = Column(String, unique=True, nullable=False, index=True)
+    status = Column(String, default="pending", nullable=False)
+    amount = Column(Float, nullable=False)
+    currency = Column(String, default="NGN", nullable=False)
+    shipping_address = Column(JSON, nullable=True)
+    delivery_notes = Column(String, nullable=True)
+    save_address = Column(Boolean, default=False)
+    provider = Column(String, nullable=True)
+    provider_transaction_id = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
+
+
+class OrderItem(Base):
+    __tablename__ = "order_item"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
+    product_id = Column(Integer, ForeignKey("product.id"), nullable=False)
+    quantity = Column(Integer, nullable=False, default=1)
+    unit_price = Column(Float, nullable=False)
+    order = relationship("Order", back_populates="items")
+

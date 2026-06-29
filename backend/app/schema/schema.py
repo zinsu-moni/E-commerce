@@ -88,3 +88,20 @@ class CartItemResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+
+class CheckoutAddress(BaseModel):
+    full_name: str = Field(..., min_length=1, max_length=120)
+    phone: str = Field(..., min_length=6, max_length=30)
+    address_line_1: str = Field(..., min_length=1, max_length=200)
+    address_line_2: Optional[str] = Field(default=None, max_length=200)
+    city: str = Field(..., min_length=1, max_length=100)
+    state: str = Field(..., min_length=1, max_length=100)
+    country: str = Field(..., min_length=1, max_length=100)
+    postal_code: Optional[str] = Field(default=None, max_length=20)
+
+
+class CheckoutRequest(BaseModel):
+    address: CheckoutAddress
+    save_address: bool = False
+    delivery_notes: Optional[str] = Field(default=None, max_length=500)
+
